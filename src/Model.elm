@@ -2,15 +2,39 @@ module Model exposing (..)
 
 import Http
 import Array exposing (Array)
+import Debounce exposing (Debounce)
 
-type Model = Failure | Loading | Success Replays
-type Msg = GotReplays (Result Http.Error Replays) | RefreshReplays
+type Msg =
+    GotReplays (Result Http.Error ReplaysResponse)
+  | GotReplay (Result Http.Error ReplayResponse)
+  | RefreshReplays
+  | PlayerFilterChange String
+  | PlayerFilterInput String
+  | DownloadReplay String
+  | DebounceMsg Debounce.Msg
+  | NoOp
+  | LoadMore
 
-type alias Replays =
-  { data : Array Replay
+type alias Model =
+  { replays: ReplaysWrapper
+  , playerFilter: Maybe String
+  , debounce: Debounce String
   }
 
-type alias Replay =
+type ReplaysWrapper = Failure | Loading | Success Replays
+
+type alias Replays =
+  { lastResponse: ReplaysResponse
+  , loadingMore: Bool
+  , accumulated: Array ReplaysResponseReplay
+  }
+
+type alias ReplaysResponse =
+  { data : Array ReplaysResponseReplay
+  , page: Int
+  }
+
+type alias ReplaysResponseReplay =
   { id : String
   , startTime: String
   , durationMs: Int
@@ -21,7 +45,7 @@ type alias Replay =
     }
   }
 
-type alias Map =
+type alias ReplaysResponseMap =
   { fileName: String
   }
 
@@ -34,3 +58,6 @@ type alias AllyTeam =
 
 type alias Player = { name: String }
 
+type alias ReplayResponse =
+  { fileName: String
+  }
