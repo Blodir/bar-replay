@@ -1,20 +1,90 @@
 module Battles.Battles exposing (Model, Msg, init, view, update)
 
 import Html exposing (..)
+import Battles.Decoders exposing (BattlesResponse, battlesDecoder)
+import Http
+import Html exposing (..)
+import Html.Attributes
+import Array
+import Battles.Decoders exposing (Battle)
+import Battles.Decoders exposing (GameType(..))
+import Utils exposing (errorToString)
+import Battles.Decoders exposing (Player)
+import Battles.Decoders exposing (PlayerGameStatus(..))
 
-type alias Model = {}
+type alias Model =
+  { battles: BattlesResponseWrapper
+  }
 
-init : () -> ( Model, Cmd msg )
+type BattlesResponseWrapper = Failure Http.Error | Loading | Success BattlesResponse
+
+type Msg =
+  GotBattle (Result Http.Error BattlesResponse)
+
+init : () -> ( Model, Cmd Msg )
 init _ =
-  ( {}
-  , Cmd.none
+  ( { battles = Loading }
+  , getBattles
   )
 
 view : Model -> Html Msg
-view model = text "Hello battles"
+view model =
+  case model.battles of
+    Failure e -> text ("Failure: " ++ (errorToString e))
+    Loading -> text "Loading..."
+    Success battles ->
+      div [] (
+        Array.toList (
+          Array.map battleView (Array.filter (\b
+            -> case b.gameType of
+              Just gt -> gt == Duel
+              Nothing -> False
+            ) battles)
+        )
+      )
 
-type Msg = NoOp
+battleView : Battle -> Html Msg
+battleView battle =
+  div []
+    ( (case battle.mapFileName of
+        Just fileName ->
+          [Html.img [ Html.Attributes.src ("https://api.bar-rts.com/maps/" ++ fileName ++ "/texture-thumb.jpg") ] []]
+        Nothing ->
+          []     
+      ) ++
+      [ text battle.title ] ++ (Array.toList (Array.map playerView battle.players))
+    )
+
+playerView : Player -> Html Msg
+playerView player =
+  div []
+  [ text player.username
+  , text
+    ( case player.skill of
+      Just skill -> skill
+      Nothing -> "No data"
+    )
+  , text
+    ( case player.gameStatus of
+      Playing -> "Playing"
+      Spectating -> "Spectating"
+      Waiting -> "Waiting"
+    )
+  ]
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-  (model, Cmd.none)
+  case msg of
+    GotBattle result ->
+      case result of
+        Ok battlesResponse ->
+          ({ model | battles = Success battlesResponse }, Cmd.none)
+        Err e ->
+          ({ model | battles = Failure e }, Cmd.none)
+
+getBattles : Cmd Msg
+getBattles =
+  Http.get
+    { url = "https://api.bar-rts.com/battles"
+    , expect = Http.expectJson GotBattle battlesDecoder
+    }
