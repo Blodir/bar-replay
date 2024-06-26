@@ -4,6 +4,7 @@ import Json.Decode exposing (..)
 import Array exposing (Array)
 import Json.Decode.Pipeline exposing (required)
 import Json.Decode.Pipeline exposing (optional)
+import Regex
 
 type alias BattlesResponse = Array Battle
 
@@ -18,7 +19,7 @@ type GameType = Team | Duel | FFA
 
 type alias Player =
   { gameStatus: PlayerGameStatus
-  , skill: Maybe String
+  , skill: Maybe Float
   , username: String
   }
 
@@ -39,7 +40,7 @@ playerDecoder : Decoder Player
 playerDecoder =
   succeed Player
     |> optional "gameStatus" playerGameStatusDecoder Waiting
-    |> optional "skill" (map (\s -> Just s) string) Nothing
+    |> optional "skill" (map (\s -> parsePlayerSkill s) string) Nothing
     |> required "username" string
 
 playerGameStatusDecoder : Decoder PlayerGameStatus
@@ -60,3 +61,27 @@ gameTypeDecoder =
       "Team" -> Team
       _ -> FFA
   ) string
+
+parsePlayerSkill : String -> Maybe Float
+parsePlayerSkill str =
+  let
+    regex =
+      Maybe.withDefault Regex.never <|
+        Regex.fromString "\\[(\\d*\\.\\d*).*\\]"
+    extractSubmatch : Regex.Match -> Maybe Float
+    extractSubmatch match =
+      flattenMaybe (Maybe.map (\s -> String.toFloat s) (flattenMaybe (List.head match.submatches)))
+  in
+    flattenMaybe
+      <| Maybe.map extractSubmatch
+      <| List.head
+      <| Regex.find regex str
+
+flattenMaybe : Maybe (Maybe a) -> Maybe a
+flattenMaybe maybe
+  = case maybe of
+    Just innerMaybe ->
+      case innerMaybe of
+        Just value -> Just value
+        Nothing -> Nothing
+    Nothing -> Nothing

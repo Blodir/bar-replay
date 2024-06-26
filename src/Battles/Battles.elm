@@ -33,15 +33,32 @@ view model =
     Failure e -> text ("Failure: " ++ (errorToString e))
     Loading -> text "Loading..."
     Success battles ->
-      div [] (
+      div [] <|
+      [ h2 [] [text "Live battles"]
+      , p [] [text <| "Displaying duels with at least one player with >= " ++ (String.fromFloat minOs) ++ " OS"]
+      ] ++ (
         Array.toList (
-          Array.map battleView (Array.filter (\b
-            -> case b.gameType of
-              Just gt -> gt == Duel
-              Nothing -> False
-            ) battles)
+          Array.map battleView <| Array.filter battlesFilter battles
         )
       )
+
+minOs : Float
+minOs = 30
+
+battlesFilter : Battle -> Bool
+battlesFilter battle =
+  ( case battle.gameType of
+    Just gt -> gt == Duel 
+    Nothing -> False
+  ) && not
+    ( Array.isEmpty
+      <| Array.filter
+        (\player -> case player.skill of
+          Just os -> os >= minOs
+          Nothing -> False
+        )
+        battle.players
+    )
 
 battleView : Battle -> Html Msg
 battleView battle =
@@ -61,7 +78,7 @@ playerView player =
   [ text player.username
   , text
     ( case player.skill of
-      Just skill -> skill
+      Just skill -> String.fromFloat skill
       Nothing -> "No data"
     )
   , text

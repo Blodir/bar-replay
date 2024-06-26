@@ -37,9 +37,12 @@ init _ =
 
 view : Model -> Html Msg
 view model =
-  Html.div [ Html.Attributes.style "display" "flex" ]
-  [ Html.map (\msg -> Replays msg) (Replays.view model.replays)
-  , Html.map (\msg -> Battles msg) (Battles.view model.battles) ]
+  Html.div []
+  [ Html.h1 [] [Html.text "BAR Duel Dashboard"]
+  , Html.div [ Html.Attributes.style "display" "flex" ]
+      [ Html.map (\msg -> Replays msg) (Replays.view model.replays)
+      , Html.map (\msg -> Battles msg) (Battles.view model.battles) ]
+  ]
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =

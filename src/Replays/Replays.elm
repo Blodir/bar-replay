@@ -122,7 +122,8 @@ view model = replaysView model
 replaysView : Model -> Html Msg
 replaysView model =
   div []
-    [ Html.div []
+    [ Html.h2 [] [text "Recent replays"]
+    , Html.div []
       [ label [ for "playerFilter" ] [ text "Player name:" ]
       , input [ list "playerFilterOptions", id "playerFilter", name "playerFilter", onInput PlayerFilterInput ] []
       -- TODO autocomplete (there's no api for this smh)
