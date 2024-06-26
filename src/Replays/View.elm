@@ -16,7 +16,7 @@ view model = replaysView model
 replaysView : Model -> Html Msg
 replaysView model =
   div []
-    [ h2 [] [text "Recent replays"]
+    [ h2 [] [text "Latest replays"]
     , div []
       [ label [ for "playerFilter" ] [ text "Player name:" ]
       , input [ list "playerFilterOptions", id "playerFilter", name "playerFilter", onInput PlayerFilterInput, css inputDefault ] []
