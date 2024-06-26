@@ -8,14 +8,14 @@ errorToString error =
     Http.BadUrl url ->
         "The URL " ++ url ++ " was invalid"
     Http.Timeout ->
-        "Unable to reach the server, try again"
+        "Unable to reach the server"
     Http.NetworkError ->
-        "Unable to reach the server, check your network connection"
+        "Network Error"
     Http.BadStatus 500 ->
-        "The server had a problem, try again later"
+        "500: Internal Server Error"
     Http.BadStatus 400 ->
-        "Verify your information and try again"
-    Http.BadStatus _ ->
-        "Unknown error"
+        "400: Bad Request"
+    Http.BadStatus code ->
+        (String.fromInt code) ++ ": Unknown error"
     Http.BadBody errorMessage ->
         errorMessage

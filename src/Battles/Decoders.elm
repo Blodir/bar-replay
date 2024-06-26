@@ -11,6 +11,7 @@ type alias BattlesResponse = Array Battle
 type alias Battle =
   { title: String
   , mapFileName: Maybe String
+  , map: String
   , gameType: Maybe GameType
   , players: Array Player
   }
@@ -33,6 +34,7 @@ battleDecoder =
   succeed Battle
     |> required "title" string
     |> optional "mapFileName" (map (\s -> Just s) string) Nothing
+    |> required "map" string
     |> optional "gameType" (map (\s -> Just s) gameTypeDecoder) Nothing
     |> required "players" (array playerDecoder)
 

@@ -1,4 +1,4 @@
-module Replays.Replays exposing (Model, Msg, init, view, update, subscriptions)
+module Replays.Replays exposing (init, update, subscriptions)
 
 import Html
 import Html exposing (..)
@@ -12,6 +12,7 @@ import Task
 import File.Download
 import Json.Decode
 import Json.Decode.Pipeline exposing (required)
+import Replays.Model exposing (..)
 
 replaysDecoder : Json.Decode.Decoder ReplaysResponse
 replaysDecoder = Json.Decode.map2 ReplaysResponse (Json.Decode.field "data" replaysDataDecoder) (Json.Decode.field "page" Json.Decode.int)
@@ -41,53 +42,6 @@ allyTeamsDecoder = Json.Decode.array
 replayDecoder : Json.Decode.Decoder ReplayResponse
 replayDecoder = Json.Decode.map ReplayResponse (Json.Decode.field "fileName" Json.Decode.string)
 
-type alias Model =
-  { replays: ReplaysWrapper
-  , playerFilter: Maybe String
-  , debounce: Debounce String
-  }
-
-type ReplaysWrapper = Failure | Loading | Success Replays
-
-type alias Replays =
-  { lastResponse: ReplaysResponse
-  , loadingMore: Bool
-  , accumulated: Array ReplaysResponseReplay
-  }
-
-type alias ReplaysResponse =
-  { data : Array ReplaysResponseReplay
-  , page: Int
-  }
-
-type alias ReplaysResponseReplay =
-  { id : String
-  , startTime: String
-  , durationMs: Int
-  , map: { fileName: String }
-  , allyTeams: Array
-    { winningTeam: Bool
-    , players: Array { name: String }
-    }
-  }
-
-type alias ReplaysResponseMap =
-  { fileName: String
-  }
-
-type alias AllyTeams = Array AllyTeam
-
-type alias AllyTeam =
-  { winningTeam: Bool
-  , players: Array Player
-  }
-
-type alias Player = { name: String }
-
-type alias ReplayResponse =
-  { fileName: String
-  }
-
 init : () -> (Model, Cmd Msg)
 init _ =
   ( { replays = Loading,
@@ -115,67 +69,6 @@ getReplays playerName page =
           Nothing -> ""
       , expect = Http.expectJson GotReplays replaysDecoder
       }
-
-view : Model -> Html Msg
-view model = replaysView model
-
-replaysView : Model -> Html Msg
-replaysView model =
-  div []
-    [ Html.h2 [] [text "Recent replays"]
-    , Html.div []
-      [ label [ for "playerFilter" ] [ text "Player name:" ]
-      , input [ list "playerFilterOptions", id "playerFilter", name "playerFilter", onInput PlayerFilterInput ] []
-      -- TODO autocomplete (there's no api for this smh)
-  {-     , datalist [ id "playerFilterOptions" ]
-        [ option [ value "Blodir" ] []
-        , option [ value "Chisato" ] []
-        ] -}
-      ]
-    , case model.replays of
-        Failure ->
-          text "Failure"
-        Loading ->
-          text "Loading..."
-        Success replays ->
-          Html.div []
-          (
-            ([button [ onClick RefreshReplays ] [ text "Refresh" ]])
-            ++ (Array.toList (Array.map replayView replays.accumulated))
-            ++ (if replays.loadingMore then [text "Loading more..."] else [])
-            ++ [button [ onClick LoadMore ] [text "Load more"]]
-          )
-    ]
-
-replayView : ReplaysResponseReplay -> Html Msg
-replayView replay =
-  Html.div []
-    [ Html.img [ Html.Attributes.src ("https://api.bar-rts.com/maps/" ++ replay.map.fileName ++ "/texture-thumb.jpg") ] []
-    , text replay.map.fileName
-    , Html.ul [] (Array.toList (Array.map (\team ->
-        Html.li []
-          [ text (if team.winningTeam then "winners" else "losers")
-          , Html.ul [] (Array.toList (Array.map (\player -> Html.li [] [text player.name]) team.players))
-          ]
-      ) replay.allyTeams))
-    , replayDownloadButton replay
-    ]
-
-replayDownloadButton : ReplaysResponseReplay -> Html Msg
-replayDownloadButton replay =
-  button [ onClick (DownloadReplay replay.id) ] [ text "Download" ]
-
-
-type Msg =
-    GotReplays (Result Http.Error ReplaysResponse)
-  | GotReplay (Result Http.Error ReplayResponse)
-  | RefreshReplays
-  | PlayerFilterChange String
-  | PlayerFilterInput String
-  | DownloadReplay String
-  | DebounceMsg Debounce.Msg
-  | NoOp
-  | LoadMore
 
 debounceConfig : Debounce.Config Msg
 debounceConfig =
