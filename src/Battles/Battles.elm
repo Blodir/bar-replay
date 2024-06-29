@@ -22,6 +22,8 @@ update msg model =
           ({ model | battles = Success battlesResponse }, Cmd.none)
         Err e ->
           ({ model | battles = Failure e }, Cmd.none)
+    Tick ->
+      (model, getBattles)
 
 getBattles : Cmd Msg
 getBattles =

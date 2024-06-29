@@ -19,7 +19,7 @@ replaysView model =
     [ h2 [] [text "Latest replays"]
     , div []
       [ label [ for "playerFilter" ] [ text "Player name:" ]
-      , input [ list "playerFilterOptions", id "playerFilter", name "playerFilter", onInput PlayerFilterInput, css inputDefault ] []
+      , input [ list "playerFilterOptions", id "playerFilter", name "playerFilter", onInput PlayerFilterInput, css (inputDefault ++ [marginBottom <| px 12]) ] []
       -- TODO autocomplete (there's no api for this smh)
   {-     , datalist [ id "playerFilterOptions" ]
         [ option [ value "Blodir" ] []
@@ -34,8 +34,8 @@ replaysView model =
         Success replays ->
           div []
           (
-            ([button [ onClick RefreshReplays, css <| [margin2 (px 8) (px 0)] ++ btnDefault ] [ text "Refresh" ]])
-            ++ (Array.toList (Array.map replayView replays.accumulated))
+            -- ([button [ onClick RefreshReplays, css <| [margin2 (px 8) (px 0)] ++ btnDefault ] [ text "Refresh" ]])
+               (Array.toList (Array.map replayView replays.accumulated))
             ++ (if replays.loadingMore then [text "Loading more..."] else [])
             ++ [button [ onClick LoadMore, css btnDefault ] [text "Load more"]]
           )

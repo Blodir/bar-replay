@@ -114,7 +114,10 @@ update msg model =
         Ok replaysResponse ->
           case model.replays of
             Success oldReplays ->
-              ({ model | replays = Success ({ lastResponse = replaysResponse, loadingMore = False, accumulated = Array.append oldReplays.accumulated replaysResponse.data })}, Cmd.none)
+              if oldReplays.loadingMore then
+                ({ model | replays = Success ({ lastResponse = replaysResponse, loadingMore = False, accumulated = Array.append oldReplays.accumulated replaysResponse.data })}, Cmd.none)
+              else
+                ({ model | replays = Success ({ lastResponse = replaysResponse, loadingMore = False, accumulated = replaysResponse.data })}, Cmd.none)
             _ -> 
               ({ model | replays = Success ({ lastResponse = replaysResponse, loadingMore = False, accumulated = replaysResponse.data })}, Cmd.none)
         Err _ ->
@@ -147,3 +150,10 @@ update msg model =
           )
         _ -> 
           (model, Cmd.none)
+    Tick ->
+      ( { model | replays = case model.replays of
+          Success r -> Success { r | loadingMore = False }
+          _ -> model.replays
+        }
+      , getReplays (model.playerFilter) 1
+      )

@@ -3,6 +3,7 @@ module Replays.Model exposing (..)
 import Debounce exposing (Debounce)
 import Array exposing (Array)
 import Http
+import Time exposing (Posix)
 
 type alias Model =
   { replays: ReplaysWrapper
@@ -20,6 +21,7 @@ type Msg =
   | DebounceMsg Debounce.Msg
   | NoOp
   | LoadMore
+  | Tick
 
 type ReplaysWrapper = Failure | Loading | Success Replays
 
